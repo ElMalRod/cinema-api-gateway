@@ -1,0 +1,59 @@
+server:
+  port: 8080
+
+spring:
+  application:
+    name: api-gateway
+  main:
+    web-application-type: reactive
+  codec:
+    max-in-memory-size: 4MB
+  cloud:
+    gateway:
+      default-filters:
+        - DedupeResponseHeader=Access-Control-Allow-Credentials Access-Control-Allow-Origin
+      globalcors:
+        cors-configurations:
+          '[/**]':
+            allowedOrigins: "*"
+            allowedMethods:
+              - GET
+              - POST
+              - PUT
+              - PATCH
+              - DELETE
+              - OPTIONS
+            allowedHeaders: "*"
+
+springdoc:
+  api-docs:
+    enabled: true
+    path: /v3/api-docs
+  swagger-ui:
+    enabled: true
+    path: /swagger-ui.html
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics,prometheus,gateway
+  endpoint:
+    gateway:
+      access: unrestricted
+
+gateway:
+  auth-service:
+    base-url: http://auth-service:8081
+  services:
+    auth: http://auth-service:8081
+    users: http://users-service:8082
+    movies: http://movies-service:8083
+    cinemas: http://cinemas-service:8084
+    tickets: http://tickets-service:8085
+    ads: http://ads-service:8086
+    reports: http://reports-service:8087
+  rate-limit:
+    replenish-rate: 15
+    burst-capacity: 30
+    requested-tokens: 1
