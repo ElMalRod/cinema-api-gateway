@@ -31,7 +31,21 @@ class JwtClaimsExtractorTest {
     void shouldExtractUserIdFromToken() throws Exception {
         // Arrange
         String expectedUserId = UUID.randomUUID().toString();
-        String token = generateToken(expectedUserId, "CLIENT", Instant.now().plusSeconds(600).getEpochSecond());
+        String token = generateLegacyToken(expectedUserId, "CLIENT", Instant.now().plusSeconds(600).getEpochSecond());
+
+        // Act
+        Optional<String> userId = extractor.extractUserId(token);
+
+        // Assert
+        assertTrue(userId.isPresent());
+        assertEquals(expectedUserId, userId.get());
+    }
+
+    @Test
+    void shouldExtractUserIdFromSubClaim() throws Exception {
+        // Arrange
+        String expectedUserId = UUID.randomUUID().toString();
+        String token = generateModernToken(expectedUserId, "SYSTEM_ADMIN", Instant.now().plusSeconds(600).getEpochSecond());
 
         // Act
         Optional<String> userId = extractor.extractUserId(token);
@@ -44,7 +58,7 @@ class JwtClaimsExtractorTest {
     @Test
     void shouldExtractRoleFromToken() throws Exception {
         // Arrange
-        String token = generateToken(UUID.randomUUID().toString(), "SYSTEM_ADMIN", Instant.now().plusSeconds(600).getEpochSecond());
+        String token = generateLegacyToken(UUID.randomUUID().toString(), "SYSTEM_ADMIN", Instant.now().plusSeconds(600).getEpochSecond());
 
         // Act
         Optional<String> role = extractor.extractRole(token);
@@ -52,6 +66,19 @@ class JwtClaimsExtractorTest {
         // Assert
         assertTrue(role.isPresent());
         assertEquals("SYSTEM_ADMIN", role.get());
+    }
+
+    @Test
+    void shouldExtractRoleFromRolesArray() throws Exception {
+        // Arrange
+        String token = generateModernToken(UUID.randomUUID().toString(), "ADVERTISER", Instant.now().plusSeconds(600).getEpochSecond());
+
+        // Act
+        Optional<String> role = extractor.extractRole(token);
+
+        // Assert
+        assertTrue(role.isPresent());
+        assertEquals("ADVERTISER", role.get());
     }
 
     @Test
@@ -82,18 +109,22 @@ class JwtClaimsExtractorTest {
         assertTrue(role.isEmpty());
     }
 
-    private String generateToken(String userId, String role, long exp) throws Exception {
-        KeyPair keyPair = buildKeyPair();
-        String header = encodeJson(Map.of("alg", "RS256", "typ", "JWT"));
-        String payload = encodeJson(Map.of("user_id", userId, "role", role, "exp", exp));
-        String signature = sign(header + "." + payload, keyPair);
-        return header + "." + payload + "." + signature;
+    private String generateLegacyToken(String userId, String role, long exp) throws Exception {
+        return generateToken(Map.of("user_id", userId, "role", role, "exp", exp));
+    }
+
+    private String generateModernToken(String userId, String role, long exp) throws Exception {
+        return generateToken(Map.of("sub", userId, "roles", java.util.List.of(role), "exp", exp));
     }
 
     private String generateTokenWithoutClaims() throws Exception {
+        return generateToken(Map.of("exp", Instant.now().plusSeconds(600).getEpochSecond()));
+    }
+
+    private String generateToken(Map<String, Object> payloadClaims) throws Exception {
         KeyPair keyPair = buildKeyPair();
         String header = encodeJson(Map.of("alg", "RS256", "typ", "JWT"));
-        String payload = encodeJson(Map.of("exp", Instant.now().plusSeconds(600).getEpochSecond()));
+        String payload = encodeJson(payloadClaims);
         String signature = sign(header + "." + payload, keyPair);
         return header + "." + payload + "." + signature;
     }

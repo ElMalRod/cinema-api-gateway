@@ -7,11 +7,9 @@ import com.cinema.gateway.security.PublicRouteValidator;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.mockito.ArgumentCaptor;
 import org.springframework.cloud.gateway.filter.GatewayFilterChain;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
-import org.springframework.http.server.reactive.ServerHttpRequest;
 import org.springframework.mock.http.server.reactive.MockServerHttpRequest;
 import org.springframework.mock.web.server.MockServerWebExchange;
 import reactor.core.publisher.Mono;
@@ -28,7 +26,6 @@ import java.util.Map;
 import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
@@ -59,7 +56,23 @@ class JwtValidationFilterTest {
     @Test
     void shouldContinueFilterChainWhenTokenIsValid() throws Exception {
         // Arrange
-        String token = buildToken(UUID.randomUUID().toString(), "CLIENT", Instant.now().plusSeconds(600).getEpochSecond(), keyPair, keyPair.getPublic());
+        String token = buildLegacyToken(UUID.randomUUID().toString(), "CLIENT", Instant.now().plusSeconds(600).getEpochSecond(), keyPair);
+        MockServerWebExchange exchange = buildProtectedExchange(token);
+        when(publicRouteValidator.isPublicRoute(exchange.getRequest())).thenReturn(false);
+        when(publicKeyProvider.getPublicKey()).thenReturn(Mono.just((RSAPublicKey) keyPair.getPublic()));
+
+        // Act
+        Mono<Void> result = filter.filter(exchange, chain);
+
+        // Assert
+        StepVerifier.create(result).verifyComplete();
+        verify(chain).filter(any());
+    }
+
+    @Test
+    void shouldContinueFilterChainWhenTokenUsesSubAndRoles() throws Exception {
+        // Arrange
+        String token = buildModernToken(UUID.randomUUID().toString(), "CINEMA_ADMIN", Instant.now().plusSeconds(600).getEpochSecond(), keyPair);
         MockServerWebExchange exchange = buildProtectedExchange(token);
         when(publicRouteValidator.isPublicRoute(exchange.getRequest())).thenReturn(false);
         when(publicKeyProvider.getPublicKey()).thenReturn(Mono.just((RSAPublicKey) keyPair.getPublic()));
@@ -75,7 +88,7 @@ class JwtValidationFilterTest {
     @Test
     void shouldReturnUnauthorizedWhenTokenIsExpired() throws Exception {
         // Arrange
-        String token = buildToken(UUID.randomUUID().toString(), "CLIENT", Instant.now().minusSeconds(60).getEpochSecond(), keyPair, keyPair.getPublic());
+        String token = buildLegacyToken(UUID.randomUUID().toString(), "CLIENT", Instant.now().minusSeconds(60).getEpochSecond(), keyPair);
         MockServerWebExchange exchange = buildProtectedExchange(token);
         when(publicRouteValidator.isPublicRoute(exchange.getRequest())).thenReturn(false);
         when(publicKeyProvider.getPublicKey()).thenReturn(Mono.just((RSAPublicKey) keyPair.getPublic()));
@@ -95,7 +108,7 @@ class JwtValidationFilterTest {
         KeyPairGenerator otherGenerator = KeyPairGenerator.getInstance("RSA");
         otherGenerator.initialize(2048);
         KeyPair otherPair = otherGenerator.generateKeyPair();
-        String token = buildToken(UUID.randomUUID().toString(), "CLIENT", Instant.now().plusSeconds(600).getEpochSecond(), otherPair, otherPair.getPublic());
+        String token = buildLegacyToken(UUID.randomUUID().toString(), "CLIENT", Instant.now().plusSeconds(600).getEpochSecond(), otherPair);
         MockServerWebExchange exchange = buildProtectedExchange(token);
         when(publicRouteValidator.isPublicRoute(exchange.getRequest())).thenReturn(false);
         when(publicKeyProvider.getPublicKey()).thenReturn(Mono.just((RSAPublicKey) keyPair.getPublic()));
@@ -148,23 +161,22 @@ class JwtValidationFilterTest {
         return MockServerWebExchange.from(request);
     }
 
-    private String buildToken(
-            String userId,
-            String role,
-            long exp,
-            KeyPair signingPair,
-            java.security.PublicKey ignored
-    ) throws Exception {
-        String header = encode(Map.of("alg", "RS256", "typ", "JWT"));
-        String payload = encode(Map.of("user_id", userId, "role", role, "exp", exp));
-        String signature = sign(header + "." + payload, signingPair);
-        return header + "." + payload + "." + signature;
+    private String buildLegacyToken(String userId, String role, long exp, KeyPair signingPair) throws Exception {
+        return buildToken(Map.of("user_id", userId, "role", role, "exp", exp), signingPair);
+    }
+
+    private String buildModernToken(String userId, String role, long exp, KeyPair signingPair) throws Exception {
+        return buildToken(Map.of("sub", userId, "roles", java.util.List.of(role), "email", "admin@test.com", "exp", exp), signingPair);
     }
 
     private String buildTokenWithoutRole(String userId, long exp) throws Exception {
+        return buildToken(Map.of("sub", userId, "exp", exp), keyPair);
+    }
+
+    private String buildToken(Map<String, Object> payloadClaims, KeyPair signingPair) throws Exception {
         String header = encode(Map.of("alg", "RS256", "typ", "JWT"));
-        String payload = encode(Map.of("user_id", userId, "exp", exp));
-        String signature = sign(header + "." + payload, keyPair);
+        String payload = encode(payloadClaims);
+        String signature = sign(header + "." + payload, signingPair);
         return header + "." + payload + "." + signature;
     }
 

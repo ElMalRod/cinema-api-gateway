@@ -9,7 +9,9 @@ public final class GatewayConstants {
     public static final String USER_ID_HEADER = "X-User-Id";
     public static final String USER_ROLE_HEADER = "X-User-Role";
     public static final String CLAIM_USER_ID = "user_id";
+    public static final String CLAIM_SUB = "sub";
     public static final String CLAIM_ROLE = "role";
+    public static final String CLAIM_ROLES = "roles";
     public static final String CLAIM_EXP = "exp";
     public static final String RS256_ALGORITHM = "RS256";
     public static final String SIGNATURE_ALGORITHM = "SHA256withRSA";
