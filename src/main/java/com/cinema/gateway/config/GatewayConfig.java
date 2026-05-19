@@ -1,5 +1,6 @@
 package com.cinema.gateway.config;
 
+import com.cinema.gateway.filter.VerifyJWTFilterFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.cloud.gateway.route.RouteLocator;
 import org.springframework.cloud.gateway.route.builder.RouteLocatorBuilder;
@@ -16,6 +17,7 @@ public class GatewayConfig {
     @Bean
     public RouteLocator routeLocator(
             RouteLocatorBuilder builder,
+            VerifyJWTFilterFactory verifyJWTFilterFactory,
             @Value("${gateway.services.auth}") String authService,
             @Value("${gateway.services.users}") String usersService,
             @Value("${gateway.services.movies}") String moviesService,
@@ -24,14 +26,29 @@ public class GatewayConfig {
             @Value("${gateway.services.ads}") String adsService,
             @Value("${gateway.services.reports}") String reportsService
     ) {
+        VerifyJWTFilterFactory.Config verifyConfig = new VerifyJWTFilterFactory.Config();
+
         return builder.routes()
-                .route("auth-service", route -> route.path("/auth/**").uri(authService))
-                .route("users-service", route -> route.path("/users/**").uri(usersService))
-                .route("movies-service", route -> route.path("/movies/**").uri(moviesService))
-                .route("cinemas-service", route -> route.path("/cinemas/**").uri(cinemasService))
-                .route("tickets-service", route -> route.path("/tickets/**").uri(ticketsService))
-                .route("ads-service", route -> route.path("/ads/**").uri(adsService))
-                .route("reports-service", route -> route.path("/reports/**").uri(reportsService))
+                .route("auth-public-routes", route -> route.path("/auth/**").uri(authService))
+                .route("movies-public-routes", route -> route.path("/movies", "/movies/*").uri(moviesService))
+                .route("users-private-routes", route -> route.path("/users/**")
+                        .filters(filter -> filter.filter(verifyJWTFilterFactory.apply(verifyConfig)))
+                        .uri(usersService))
+                .route("movies-private-routes", route -> route.path("/movies/**")
+                        .filters(filter -> filter.filter(verifyJWTFilterFactory.apply(verifyConfig)))
+                        .uri(moviesService))
+                .route("cinemas-private-routes", route -> route.path("/cinemas/**")
+                        .filters(filter -> filter.filter(verifyJWTFilterFactory.apply(verifyConfig)))
+                        .uri(cinemasService))
+                .route("tickets-private-routes", route -> route.path("/tickets/**")
+                        .filters(filter -> filter.filter(verifyJWTFilterFactory.apply(verifyConfig)))
+                        .uri(ticketsService))
+                .route("ads-private-routes", route -> route.path("/ads/**")
+                        .filters(filter -> filter.filter(verifyJWTFilterFactory.apply(verifyConfig)))
+                        .uri(adsService))
+                .route("reports-private-routes", route -> route.path("/reports/**")
+                        .filters(filter -> filter.filter(verifyJWTFilterFactory.apply(verifyConfig)))
+                        .uri(reportsService))
                 .build();
     }
 
