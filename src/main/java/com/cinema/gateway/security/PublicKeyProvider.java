@@ -3,6 +3,7 @@ package com.cinema.gateway.security;
 import com.cinema.gateway.constants.GatewayConstants;
 import com.cinema.gateway.exception.GatewayAuthException;
 import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
@@ -21,14 +22,17 @@ import java.util.concurrent.atomic.AtomicReference;
 public class PublicKeyProvider {
 
     private final WebClient webClient;
+    private final ObjectMapper objectMapper;
     private final AtomicReference<RSAPublicKey> cachedKey = new AtomicReference<>();
     private final AtomicReference<Mono<RSAPublicKey>> inFlight = new AtomicReference<>();
 
     public PublicKeyProvider(
             WebClient.Builder webClientBuilder,
+            ObjectMapper objectMapper,
             @Value("${gateway.auth-service.base-url}") String authServiceBaseUrl
     ) {
         this.webClient = webClientBuilder.baseUrl(authServiceBaseUrl).build();
+        this.objectMapper = objectMapper;
     }
 
     public Mono<RSAPublicKey> getPublicKey() {
@@ -51,7 +55,7 @@ public class PublicKeyProvider {
         return webClient.get()
                 .uri(GatewayConstants.PUBLIC_KEY_ENDPOINT)
                 .retrieve()
-                .bodyToMono(JsonNode.class)
+                .bodyToMono(String.class)
                 .map(this::resolveRawKey)
                 .map(this::parsePublicKey)
                 .doOnNext(cachedKey::set)
@@ -59,10 +63,20 @@ public class PublicKeyProvider {
                 .onErrorMap(ex -> new GatewayAuthException(HttpStatus.UNAUTHORIZED, "Unable to load public key"));
     }
 
-    private String resolveRawKey(JsonNode body) {
-        if (body.isTextual()) {
-            return body.asText();
+    private String resolveRawKey(String body) {
+        String normalized = body == null ? "" : body.trim();
+        if (normalized.startsWith("-----BEGIN PUBLIC KEY-----")) {
+            return normalized;
         }
+        try {
+            JsonNode jsonNode = objectMapper.readTree(normalized);
+            return resolveFromJson(jsonNode);
+        } catch (Exception exception) {
+            throw new GatewayAuthException(HttpStatus.UNAUTHORIZED, "Invalid public key response format");
+        }
+    }
+
+    private String resolveFromJson(JsonNode body) {
         if (body.has("publicKey")) {
             return body.get("publicKey").asText();
         }

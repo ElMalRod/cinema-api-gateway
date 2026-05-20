@@ -82,7 +82,7 @@ class PublicKeyProviderTest {
 
     private PublicKeyProvider buildProvider(ExchangeFunction exchangeFunction) {
         WebClient.Builder builder = WebClient.builder().exchangeFunction(exchangeFunction);
-        return new PublicKeyProvider(builder, "http://auth-service:8081");
+        return new PublicKeyProvider(builder, new ObjectMapper(), "http://auth-service:8081");
     }
 
     private ExchangeFunction successfulExchangeFunction() {
@@ -111,3 +111,4 @@ class PublicKeyProviderTest {
         }
     }
 }
+

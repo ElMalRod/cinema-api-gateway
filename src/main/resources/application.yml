@@ -47,15 +47,15 @@ management:
 
 gateway:
   auth-service:
-    base-url: http://auth-service:8081
+    base-url: ${GATEWAY_AUTH_BASE_URL:http://localhost:8081}
   services:
-    auth: http://auth-service:8081
-    users: http://users-service:8082
-    movies: http://movies-service:8083
-    cinemas: http://cinemas-service:8084
-    tickets: http://tickets-service:8085
-    ads: http://ads-service:8086
-    reports: http://reports-service:8087
+    auth: ${GATEWAY_SERVICE_AUTH:http://localhost:8081}
+    users: ${GATEWAY_SERVICE_USERS:http://localhost:8082}
+    movies: ${GATEWAY_SERVICE_MOVIES:http://localhost:8083}
+    cinemas: ${GATEWAY_SERVICE_CINEMAS:http://localhost:8084}
+    tickets: ${GATEWAY_SERVICE_TICKETS:http://localhost:8085}
+    ads: ${GATEWAY_SERVICE_ADS:http://localhost:8086}
+    reports: ${GATEWAY_SERVICE_REPORTS:http://localhost:8087}
   rate-limit:
     replenish-rate: 15
     burst-capacity: 30
