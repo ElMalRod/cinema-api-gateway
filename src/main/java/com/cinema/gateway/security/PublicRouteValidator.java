@@ -12,6 +12,8 @@ public class PublicRouteValidator {
     private final List<RouteAccessStrategy> publicStrategies = List.of(
             new ExactRouteStrategy(HttpMethod.POST, "/auth/login"),
             new ExactRouteStrategy(HttpMethod.POST, "/auth/register"),
+            new ExactRouteStrategy(HttpMethod.POST, "/auth/forgot-password"),
+            new ExactRouteStrategy(HttpMethod.POST, "/auth/reset-password"),
             new ExactRouteStrategy(HttpMethod.GET, "/movies"),
             new MoviesByIdStrategy()
     );
