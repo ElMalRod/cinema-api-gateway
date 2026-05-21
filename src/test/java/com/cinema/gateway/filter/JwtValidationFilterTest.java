@@ -112,6 +112,7 @@ class JwtValidationFilterTest {
         MockServerWebExchange exchange = buildProtectedExchange(token);
         when(publicRouteValidator.isPublicRoute(exchange.getRequest())).thenReturn(false);
         when(publicKeyProvider.getPublicKey()).thenReturn(Mono.just((RSAPublicKey) keyPair.getPublic()));
+        when(publicKeyProvider.refreshPublicKey()).thenReturn(Mono.just((RSAPublicKey) keyPair.getPublic()));
 
         // Act
         Mono<Void> result = filter.filter(exchange, chain);

@@ -26,6 +26,9 @@ services:
       - tickets-service
       - ads-service
       - reports-service
+      - 
+
+
     networks:
       - cinema-net
 

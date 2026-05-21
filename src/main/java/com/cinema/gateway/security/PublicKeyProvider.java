@@ -50,6 +50,10 @@ public class PublicKeyProvider {
         }
         return created.doFinally(signal -> inFlight.set(null));
     }
+    public Mono<RSAPublicKey> refreshPublicKey() {
+        cachedKey.set(null);
+        return getPublicKey();
+    }
 
     private Mono<RSAPublicKey> fetchAndCache() {
         return webClient.get()
@@ -104,3 +108,4 @@ public class PublicKeyProvider {
                 .replaceAll("\\s+", "");
     }
 }
+

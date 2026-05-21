@@ -56,9 +56,20 @@ public class JwtAuthFilter implements GlobalFilter, Ordered {
             String token,
             RSAPublicKey publicKey
     ) {
-        if (!isSignatureValid(token, publicKey) || isExpired(token)) {
+        if (isExpired(token)) {
             return writeError(exchange, HttpStatus.UNAUTHORIZED, "Invalid or expired token");
         }
+        if (isSignatureValid(token, publicKey)) {
+            return injectUserContext(exchange, chain, token);
+        }
+        log.warn("JWT signature failed with cached key. Refreshing public key from auth-service");
+        return publicKeyProvider.refreshPublicKey()
+                .flatMap(refreshedKey -> isSignatureValid(token, refreshedKey)
+                        ? injectUserContext(exchange, chain, token)
+                        : writeError(exchange, HttpStatus.UNAUTHORIZED, "Invalid or expired token"));
+    }
+
+    private Mono<Void> injectUserContext(ServerWebExchange exchange, GatewayFilterChain chain, String token) {
         Optional<String> userId = claimsExtractor.extractUserId(token);
         Optional<String> role = claimsExtractor.extractRole(token);
         if (userId.isEmpty() || role.isEmpty()) {
@@ -135,4 +146,3 @@ public class JwtAuthFilter implements GlobalFilter, Ordered {
         return -1;
     }
 }
-
