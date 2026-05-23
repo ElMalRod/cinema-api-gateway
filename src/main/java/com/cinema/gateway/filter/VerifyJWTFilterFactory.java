@@ -51,9 +51,25 @@ public class VerifyJWTFilterFactory extends AbstractGatewayFilterFactory<VerifyJ
             String token,
             RSAPublicKey publicKey
     ) {
-        if (!isSignatureValid(token, publicKey) || isExpired(token)) {
+        if (isExpired(token)) {
             return Mono.error(new GatewayAuthException(HttpStatus.UNAUTHORIZED, "Invalid or expired token"));
         }
+
+        if (!isSignatureValid(token, publicKey)) {
+            return publicKeyProvider.refreshPublicKey()
+                    .flatMap(refreshedKey -> isSignatureValid(token, refreshedKey)
+                            ? injectUserHeadersAndContinue(exchange, chain, token)
+                            : Mono.error(new GatewayAuthException(HttpStatus.UNAUTHORIZED, "Invalid or expired token")));
+        }
+
+        return injectUserHeadersAndContinue(exchange, chain, token);
+    }
+
+    private Mono<Void> injectUserHeadersAndContinue(
+            ServerWebExchange exchange,
+            org.springframework.cloud.gateway.filter.GatewayFilterChain chain,
+            String token
+    ) {
         Optional<String> userId = claimsExtractor.extractUserId(token);
         Optional<String> role = claimsExtractor.extractRole(token);
         if (userId.isEmpty() || role.isEmpty()) {
