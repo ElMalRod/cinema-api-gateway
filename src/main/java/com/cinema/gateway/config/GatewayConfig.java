@@ -39,7 +39,6 @@ public class GatewayConfig {
                         .uri(moviesService))
                 .route("cinemas-private-routes", route -> route.path("/cinemas/**")
                         .filters(filter -> filter
-                                .stripPrefix(1)
                                 .filter(verifyJWTFilterFactory.apply(verifyConfig)))
                         .uri(cinemasService))
                 .route("tickets-private-routes", route -> route.path("/tickets/**")
