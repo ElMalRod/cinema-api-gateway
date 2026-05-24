@@ -2,13 +2,11 @@ pipeline {
     agent any
 
     environment {
-        SERVICE_NAME     = 'cinema-api-gateway'
-        SERVICE_PORT     = '8085'
-        EC2_HOST         = credentials('EC2_SERVICES_HOST')
-        SSH_KEY          = credentials('SSH_DEPLOY_KEY')
-        KAFKA_SERVERS    = '18.188.55.33:9092'
-        AUTH_SERVICE_URL = 'http://cinema-auth-service:8081'
-        USERS_SERVICE_URL= 'http://cinema-users-service:8082'
+        SERVICE_NAME      = 'cinema-api-gateway'
+        SERVICE_PORT      = '8085'
+        KAFKA_SERVERS     = '18.188.55.33:9092'
+        AUTH_SERVICE_URL  = 'http://cinema-auth-service:8081'
+        USERS_SERVICE_URL = 'http://cinema-users-service:8082'
     }
 
     stages {
@@ -65,64 +63,77 @@ pipeline {
 
         stage('Build Docker Image') {
             steps {
-                sh "docker build -t ${SERVICE_NAME}:latest ."
+                sh "docker build -t ${env.SERVICE_NAME}:latest ."
             }
         }
 
         stage('Transfer Image') {
             steps {
-                sh """
-                    docker save ${SERVICE_NAME}:latest | gzip > ${SERVICE_NAME}.tar.gz
-                    scp -i ${SSH_KEY} \
-                        -o StrictHostKeyChecking=no \
-                        ${SERVICE_NAME}.tar.gz \
-                        ubuntu@${EC2_HOST}:~/
-                """
+                withCredentials([
+                    string(credentialsId: 'EC2_SERVICES_HOST', variable: 'HOST'),
+                    sshUserPrivateKey(credentialsId: 'SSH_DEPLOY_KEY', keyFileVariable: 'KEY_FILE')
+                ]) {
+                    sh '''
+                        docker save cinema-api-gateway:latest | gzip > cinema-api-gateway.tar.gz
+                        scp -i "$KEY_FILE" \
+                            -o StrictHostKeyChecking=no \
+                            cinema-api-gateway.tar.gz \
+                            ubuntu@"$HOST":~/
+                    '''
+                }
             }
         }
 
         stage('Deploy') {
             steps {
-                sh """
-                    ssh -i ${SSH_KEY} \
-                        -o StrictHostKeyChecking=no \
-                        ubuntu@${EC2_HOST} '
-                            docker load < ${SERVICE_NAME}.tar.gz
-                            docker stop ${SERVICE_NAME} || true
-                            docker rm ${SERVICE_NAME} || true
-                            docker run -d \
-                                --name ${SERVICE_NAME} \
-                                --network cinema-network \
-                                -p ${SERVICE_PORT}:8085 \
-                                -e AUTH_SERVICE_URL=${AUTH_SERVICE_URL} \
-                                -e USERS_SERVICE_URL=${USERS_SERVICE_URL} \
-                                -e SPRING_KAFKA_BOOTSTRAP_SERVERS=${KAFKA_SERVERS} \
-                                ${SERVICE_NAME}:latest
-                        '
-                """
+                withCredentials([
+                    string(credentialsId: 'EC2_SERVICES_HOST', variable: 'HOST'),
+                    sshUserPrivateKey(credentialsId: 'SSH_DEPLOY_KEY', keyFileVariable: 'KEY_FILE')
+                ]) {
+                    sh '''
+                        ssh -i "$KEY_FILE" \
+                            -o StrictHostKeyChecking=no \
+                            ubuntu@"$HOST" "
+                                docker load < cinema-api-gateway.tar.gz
+                                docker stop cinema-api-gateway || true
+                                docker rm cinema-api-gateway || true
+                                docker run -d \
+                                    --name cinema-api-gateway \
+                                    --network cinema-network \
+                                    -p 8085:8085 \
+                                    -e AUTH_SERVICE_URL=http://cinema-auth-service:8081 \
+                                    -e USERS_SERVICE_URL=http://cinema-users-service:8082 \
+                                    -e SPRING_KAFKA_BOOTSTRAP_SERVERS=18.188.55.33:9092 \
+                                    cinema-api-gateway:latest
+                            "
+                    '''
+                }
             }
         }
 
         stage('Health Check') {
             steps {
-                sh 'sleep 20'
-                sh """
-                    curl -f http://${EC2_HOST}:${SERVICE_PORT}/actuator/health \
-                        || error "Health check falló"
-                """
+                withCredentials([
+                    string(credentialsId: 'EC2_SERVICES_HOST', variable: 'HOST')
+                ]) {
+                    sh '''
+                        sleep 20
+                        curl -f http://"$HOST":8085/actuator/health || exit 1
+                    '''
+                }
             }
         }
     }
 
     post {
         success {
-            echo "${SERVICE_NAME} desplegado correctamente"
+            echo "cinema-api-gateway desplegado correctamente"
         }
         failure {
-            echo "Pipeline falló en ${SERVICE_NAME}"
+            echo "Pipeline falló en cinema-api-gateway"
         }
         always {
-            sh "rm -f ${SERVICE_NAME}.tar.gz || true"
+            sh 'rm -f cinema-api-gateway.tar.gz || true'
         }
     }
 }
