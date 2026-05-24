@@ -31,6 +31,7 @@ public class GatewayConfig {
         return builder.routes()
                 .route("auth-public-routes", route -> route.path("/auth/**").uri(authService))
                 .route("movies-public-routes", route -> route.path("/movies", "/movies/*").uri(moviesService))
+                .route("ads-public-routes", route -> route.path("/ads/active").uri(adsService))
                 .route("users-private-routes", route -> route.path("/users/**")
                         .filters(filter -> filter.filter(verifyJWTFilterFactory.apply(verifyConfig)))
                         .uri(usersService))
