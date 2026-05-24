@@ -98,7 +98,7 @@ pipeline {
                                 docker run -d \
                                     --name cinema-api-gateway \
                                     --network cinema-network \
-                                    -p 8085:8085 \
+                                    -p 8085:8080 \
                                     -e AUTH_SERVICE_URL=http://cinema-auth-service:8081 \
                                     -e USERS_SERVICE_URL=http://cinema-users-service:8082 \
                                     -e SPRING_KAFKA_BOOTSTRAP_SERVERS=18.188.55.33:9092 \
