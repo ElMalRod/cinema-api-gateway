@@ -15,6 +15,7 @@ public class PublicRouteValidator {
             new ExactRouteStrategy(HttpMethod.POST, "/auth/forgot-password"),
             new ExactRouteStrategy(HttpMethod.POST, "/auth/reset-password"),
             new ExactRouteStrategy(HttpMethod.GET, "/movies"),
+            new ExactRouteStrategy(HttpMethod.GET, "/ads/active"),
             new MoviesByIdStrategy()
     );
 
