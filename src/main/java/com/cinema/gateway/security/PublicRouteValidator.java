@@ -16,7 +16,8 @@ public class PublicRouteValidator {
             new ExactRouteStrategy(HttpMethod.POST, "/auth/reset-password"),
             new ExactRouteStrategy(HttpMethod.GET, "/movies"),
             new ExactRouteStrategy(HttpMethod.GET, "/ads/active"),
-            new MoviesByIdStrategy()
+            new MoviesByIdStrategy(),
+            new PublicMoviesApiStrategy()
     );
 
     public boolean isPublicRoute(ServerHttpRequest request) {
@@ -40,6 +41,17 @@ public class PublicRouteValidator {
         @Override
         public boolean matches(HttpMethod method, String path) {
             return method == HttpMethod.GET && path.matches("^/movies/[^/]+$");
+        }
+    }
+
+    private static final class PublicMoviesApiStrategy implements RouteAccessStrategy {
+        @Override
+        public boolean matches(HttpMethod method, String path) {
+            if (method != HttpMethod.GET) return false;
+            return path.equals("/movies/v1/movies")
+                    || path.startsWith("/movies/v1/movies/")
+                    || path.equals("/movies/v1/categories")
+                    || path.startsWith("/movies/v1/countries/");
         }
     }
 }

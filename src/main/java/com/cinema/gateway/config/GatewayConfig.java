@@ -6,6 +6,7 @@ import org.springframework.cloud.gateway.route.RouteLocator;
 import org.springframework.cloud.gateway.route.builder.RouteLocatorBuilder;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.http.HttpMethod;
 import org.springframework.security.config.annotation.web.reactive.EnableWebFluxSecurity;
 import org.springframework.security.config.web.server.ServerHttpSecurity;
 import org.springframework.security.web.server.SecurityWebFilterChain;
@@ -32,6 +33,10 @@ public class GatewayConfig {
                 .route("auth-public-routes", route -> route.path("/auth/**").uri(authService))
                 .route("movies-public-routes", route -> route.path("/movies", "/movies/*").uri(moviesService))
                 .route("ads-public-routes", route -> route.path("/ads/active").uri(adsService))
+                .route("movies-api-public-routes", route -> route
+                        .path("/movies/v1/**")
+                        .and().method(HttpMethod.GET)
+                        .uri(moviesService))
                 .route("users-private-routes", route -> route.path("/users/**")
                         .filters(filter -> filter.filter(verifyJWTFilterFactory.apply(verifyConfig)))
                         .uri(usersService))

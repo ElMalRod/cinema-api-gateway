@@ -144,4 +144,48 @@ class PublicRouteValidatorTest {
         // Assert
         assertFalse(result);
     }
+
+    // ── PublicMoviesApiStrategy ───────────────────────────────────────────────
+
+    @Test
+    void shouldReturnTrueForGetMoviesV1List() {
+        MockServerHttpRequest request = MockServerHttpRequest.method(HttpMethod.GET, "/movies/v1/movies").build();
+        assertTrue(validator.isPublicRoute(request));
+    }
+
+    @Test
+    void shouldReturnTrueForGetMoviesV1Detail() {
+        MockServerHttpRequest request = MockServerHttpRequest.method(HttpMethod.GET, "/movies/v1/movies/abc-123").build();
+        assertTrue(validator.isPublicRoute(request));
+    }
+
+    @Test
+    void shouldReturnTrueForGetMoviesV1NestedPath() {
+        MockServerHttpRequest request = MockServerHttpRequest.method(HttpMethod.GET, "/movies/v1/movies/abc-123/comments").build();
+        assertTrue(validator.isPublicRoute(request));
+    }
+
+    @Test
+    void shouldReturnTrueForGetMoviesV1Categories() {
+        MockServerHttpRequest request = MockServerHttpRequest.method(HttpMethod.GET, "/movies/v1/categories").build();
+        assertTrue(validator.isPublicRoute(request));
+    }
+
+    @Test
+    void shouldReturnTrueForGetMoviesV1CountriesClassifications() {
+        MockServerHttpRequest request = MockServerHttpRequest.method(HttpMethod.GET, "/movies/v1/countries/00000001/classifications").build();
+        assertTrue(validator.isPublicRoute(request));
+    }
+
+    @Test
+    void shouldReturnFalseForPostMoviesV1List() {
+        MockServerHttpRequest request = MockServerHttpRequest.method(HttpMethod.POST, "/movies/v1/movies").build();
+        assertFalse(validator.isPublicRoute(request));
+    }
+
+    @Test
+    void shouldReturnFalseForDeleteMoviesV1Movie() {
+        MockServerHttpRequest request = MockServerHttpRequest.method(HttpMethod.DELETE, "/movies/v1/movies/abc-123").build();
+        assertFalse(validator.isPublicRoute(request));
+    }
 }
