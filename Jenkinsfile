@@ -70,16 +70,16 @@ pipeline {
         stage('Transfer Image') {
             steps {
                 withCredentials([
-                    string(credentialsId: 'EC2_SERVICES_HOST', variable: 'HOST'),
-                    sshUserPrivateKey(credentialsId: 'SSH_DEPLOY_KEY', keyFileVariable: 'KEY_FILE')
+                    string(credentialsId: 'EC2_SERVICES_HOST', variable: 'HOST')
                 ]) {
-                    sh '''
-                        docker save cinema-api-gateway:latest | gzip > cinema-api-gateway.tar.gz
-                        scp -i "$KEY_FILE" \
-                            -o StrictHostKeyChecking=no \
-                            cinema-api-gateway.tar.gz \
-                            ubuntu@"$HOST":~/
-                    '''
+                    sshagent(['SSH_DEPLOY_KEY']) {
+                        sh '''
+                            docker save cinema-api-gateway:latest | gzip > cinema-api-gateway.tar.gz
+                            scp -o StrictHostKeyChecking=no \
+                                cinema-api-gateway.tar.gz \
+                                ubuntu@"$HOST":~/
+                        '''
+                    }
                 }
             }
         }
@@ -87,13 +87,11 @@ pipeline {
         stage('Deploy') {
             steps {
                 withCredentials([
-                    string(credentialsId: 'EC2_SERVICES_HOST', variable: 'HOST'),
-                    sshUserPrivateKey(credentialsId: 'SSH_DEPLOY_KEY', keyFileVariable: 'KEY_FILE')
+                    string(credentialsId: 'EC2_SERVICES_HOST', variable: 'HOST')
                 ]) {
-                    sh '''
-                        ssh -i "$KEY_FILE" \
-                            -o StrictHostKeyChecking=no \
-                            ubuntu@"$HOST" "
+                    sshagent(['SSH_DEPLOY_KEY']) {
+                        sh '''
+                            ssh -o StrictHostKeyChecking=no ubuntu@"$HOST" "
                                 docker load < cinema-api-gateway.tar.gz
                                 docker stop cinema-api-gateway || true
                                 docker rm cinema-api-gateway || true
@@ -106,7 +104,8 @@ pipeline {
                                     -e SPRING_KAFKA_BOOTSTRAP_SERVERS=18.188.55.33:9092 \
                                     cinema-api-gateway:latest
                             "
-                    '''
+                        '''
+                    }
                 }
             }
         }
