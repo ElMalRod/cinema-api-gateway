@@ -4,9 +4,12 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.http.HttpMethod;
 import org.springframework.mock.http.server.reactive.MockServerHttpRequest;
+import org.springframework.http.server.reactive.ServerHttpRequest;
 
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
 
 class PublicRouteValidatorTest {
 
@@ -81,6 +84,59 @@ class PublicRouteValidatorTest {
     void shouldReturnFalseForUsersProfileRoute() {
         // Arrange
         MockServerHttpRequest request = MockServerHttpRequest.method(HttpMethod.GET, "/users/profile").build();
+
+        // Act
+        boolean result = validator.isPublicRoute(request);
+
+        // Assert
+        assertFalse(result);
+    }
+
+    @Test
+    void shouldReturnTrueForForgotPasswordAndResetPasswordRoutes() {
+        // Arrange
+        MockServerHttpRequest forgot = MockServerHttpRequest.method(HttpMethod.POST, "/auth/forgot-password").build();
+        MockServerHttpRequest reset = MockServerHttpRequest.method(HttpMethod.POST, "/auth/reset-password").build();
+
+        // Act
+        boolean forgotResult = validator.isPublicRoute(forgot);
+        boolean resetResult = validator.isPublicRoute(reset);
+
+        // Assert
+        assertTrue(forgotResult);
+        assertTrue(resetResult);
+    }
+
+    @Test
+    void shouldReturnFalseForMoviesNestedPath() {
+        // Arrange
+        MockServerHttpRequest request = MockServerHttpRequest.method(HttpMethod.GET, "/movies/123/reviews").build();
+
+        // Act
+        boolean result = validator.isPublicRoute(request);
+
+        // Assert
+        assertFalse(result);
+    }
+
+    @Test
+    void shouldReturnFalseForMovieByIdWhenMethodIsNotGet() {
+        // Arrange
+        MockServerHttpRequest request = MockServerHttpRequest.method(HttpMethod.POST, "/movies/123").build();
+
+        // Act
+        boolean result = validator.isPublicRoute(request);
+
+        // Assert
+        assertFalse(result);
+    }
+
+    @Test
+    void shouldReturnFalseWhenMethodIsNull() {
+        // Arrange
+        ServerHttpRequest request = mock(ServerHttpRequest.class);
+        when(request.getMethod()).thenReturn(null);
+        when(request.getPath()).thenReturn(MockServerHttpRequest.get("/movies").build().getPath());
 
         // Act
         boolean result = validator.isPublicRoute(request);

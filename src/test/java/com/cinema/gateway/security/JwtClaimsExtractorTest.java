@@ -109,6 +109,70 @@ class JwtClaimsExtractorTest {
         assertTrue(role.isEmpty());
     }
 
+    @Test
+    void shouldExtractExpirationFromNumericString() throws Exception {
+        // Arrange
+        long epochSeconds = Instant.now().plusSeconds(600).getEpochSecond();
+        String token = generateToken(Map.of("exp", String.valueOf(epochSeconds)));
+
+        // Act
+        Optional<Instant> expiration = extractor.extractExpiration(token);
+
+        // Assert
+        assertTrue(expiration.isPresent());
+        assertEquals(epochSeconds, expiration.get().getEpochSecond());
+    }
+
+    @Test
+    void shouldReturnEmptyExpirationWhenExpIsInvalidString() throws Exception {
+        // Arrange
+        String token = generateToken(Map.of("exp", "tomorrow"));
+
+        // Act
+        Optional<Instant> expiration = extractor.extractExpiration(token);
+
+        // Assert
+        assertTrue(expiration.isEmpty());
+    }
+
+    @Test
+    void shouldReturnEmptyRoleWhenRolesListFirstElementIsNotString() throws Exception {
+        // Arrange
+        String token = generateToken(Map.of("sub", UUID.randomUUID().toString(), "roles", java.util.List.of(123), "exp", Instant.now().plusSeconds(600).getEpochSecond()));
+
+        // Act
+        Optional<String> role = extractor.extractRole(token);
+
+        // Assert
+        assertTrue(role.isEmpty());
+    }
+
+    @Test
+    void shouldReturnEmptyWhenTokenDoesNotHaveThreeSections() {
+        // Arrange
+        String malformedToken = "only.two";
+
+        // Act
+        Optional<Map<String, Object>> claims = extractor.extractClaims(malformedToken);
+
+        // Assert
+        assertTrue(claims.isEmpty());
+    }
+
+    @Test
+    void shouldReturnEmptyWhenPayloadIsNotJson() {
+        // Arrange
+        String header = Base64.getUrlEncoder().withoutPadding().encodeToString("{\"alg\":\"RS256\"}".getBytes(StandardCharsets.UTF_8));
+        String payload = Base64.getUrlEncoder().withoutPadding().encodeToString("not-json".getBytes(StandardCharsets.UTF_8));
+        String token = header + "." + payload + ".signature";
+
+        // Act
+        Optional<Map<String, Object>> claims = extractor.extractClaims(token);
+
+        // Assert
+        assertTrue(claims.isEmpty());
+    }
+
     private String generateLegacyToken(String userId, String role, long exp) throws Exception {
         return generateToken(Map.of("user_id", userId, "role", role, "exp", exp));
     }

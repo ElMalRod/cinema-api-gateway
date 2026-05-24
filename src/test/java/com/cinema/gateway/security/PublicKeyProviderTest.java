@@ -15,6 +15,7 @@ import reactor.test.StepVerifier;
 import java.security.KeyPair;
 import java.security.KeyPairGenerator;
 import java.security.interfaces.RSAPublicKey;
+import java.time.Duration;
 import java.util.Base64;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -78,6 +79,85 @@ class PublicKeyProviderTest {
                     assertEquals(HttpStatus.UNAUTHORIZED, ((GatewayAuthException) error).getStatus());
                 })
                 .verify();
+    }
+
+    @Test
+    void shouldResolvePublicKeyFromSnakeCaseField() {
+        // Arrange
+        PublicKeyProvider provider = buildProvider(request -> Mono.just(jsonResponse(Map.of("public_key", publicKeyString))));
+
+        // Act
+        Mono<RSAPublicKey> result = provider.getPublicKey();
+
+        // Assert
+        StepVerifier.create(result).expectNextCount(1).verifyComplete();
+    }
+
+    @Test
+    void shouldResolvePublicKeyFromPemBody() {
+        // Arrange
+        String pem = "-----BEGIN PUBLIC KEY-----\n" + publicKeyString + "\n-----END PUBLIC KEY-----";
+        PublicKeyProvider provider = buildProvider(request -> Mono.just(ClientResponse.create(HttpStatus.OK).body(pem).build()));
+
+        // Act
+        Mono<RSAPublicKey> result = provider.getPublicKey();
+
+        // Assert
+        StepVerifier.create(result).expectNextCount(1).verifyComplete();
+    }
+
+    @Test
+    void shouldFailWhenJsonDoesNotContainPublicKey() {
+        // Arrange
+        PublicKeyProvider provider = buildProvider(request -> Mono.just(jsonResponse(Map.of("unknown", "value"))));
+
+        // Act
+        Mono<RSAPublicKey> result = provider.getPublicKey();
+
+        // Assert
+        StepVerifier.create(result)
+                .expectErrorSatisfies(error -> {
+                    assertEquals(GatewayAuthException.class, error.getClass());
+                    assertEquals(HttpStatus.UNAUTHORIZED, ((GatewayAuthException) error).getStatus());
+                })
+                .verify();
+    }
+
+    @Test
+    void shouldFailWhenPublicKeyValueIsNotValidBase64() {
+        // Arrange
+        PublicKeyProvider provider = buildProvider(request -> Mono.just(jsonResponse(Map.of("publicKey", "###invalid###"))));
+
+        // Act
+        Mono<RSAPublicKey> result = provider.getPublicKey();
+
+        // Assert
+        StepVerifier.create(result)
+                .expectErrorSatisfies(error -> {
+                    assertEquals(GatewayAuthException.class, error.getClass());
+                    assertEquals(HttpStatus.UNAUTHORIZED, ((GatewayAuthException) error).getStatus());
+                })
+                .verify();
+    }
+
+    @Test
+    void shouldShareInFlightRequestAcrossConcurrentCallers() {
+        // Arrange
+        AtomicInteger concurrentCalls = new AtomicInteger();
+        PublicKeyProvider provider = buildProvider(request -> {
+            concurrentCalls.incrementAndGet();
+            return Mono.delay(Duration.ofMillis(75)).map(ignore -> jsonResponse(Map.of("publicKey", publicKeyString)));
+        });
+
+        // Act
+        Mono<RSAPublicKey> first = provider.getPublicKey();
+        Mono<RSAPublicKey> second = provider.getPublicKey();
+
+        // Assert
+        StepVerifier.create(Mono.zip(first, second))
+                .expectNextCount(1)
+                .verifyComplete();
+        assertEquals(1, concurrentCalls.get());
     }
 
     private PublicKeyProvider buildProvider(ExchangeFunction exchangeFunction) {
