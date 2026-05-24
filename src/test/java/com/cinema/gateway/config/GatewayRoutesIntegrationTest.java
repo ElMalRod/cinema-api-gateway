@@ -53,7 +53,7 @@ class GatewayRoutesIntegrationTest {
     void shouldRegisterAllGatewayRoutes() {
         List<String> ids = routeLocator.getRoutes().map(Route::getId).collectList().block();
 
-        assertEquals(8, ids.size());
+        assertEquals(9, ids.size());
         assertTrue(ids.contains("auth-public-routes"));
         assertTrue(ids.contains("movies-public-routes"));
         assertTrue(ids.contains("users-private-routes"));
