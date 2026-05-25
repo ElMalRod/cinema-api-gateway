@@ -49,13 +49,13 @@ gateway:
   auth-service:
     base-url: ${GATEWAY_AUTH_BASE_URL:http://cinema-auth-service:8081}
   services:
-    auth: ${GATEWAY_SERVICE_AUTH:http://cinema-auth-service:8081}
-    users: ${GATEWAY_SERVICE_USERS:http://cinema-users-service:8082}
-    movies: ${GATEWAY_SERVICE_MOVIES:http://localhost:8083}
-    cinemas: ${GATEWAY_SERVICE_CINEMAS:http://localhost:8084}
-    tickets: ${GATEWAY_SERVICE_TICKETS:http://localhost:8085}
-    ads: ${GATEWAY_SERVICE_ADS:http://localhost:8086}
-    reports: ${GATEWAY_SERVICE_REPORTS:http://localhost:8087}
+    auth: ${GATEWAY_SERVICES_AUTH:http://cinema-auth-service:8081}
+    users: ${GATEWAY_SERVICES_USERS:http://cinema-users-service:8082}
+    movies: ${GATEWAY_SERVICES_MOVIES:http://cinema-movies-service:8083}
+    cinemas: ${GATEWAY_SERVICES_CINEMAS:http://cinema-cinemas-service:8084}
+    tickets: ${GATEWAY_SERVICES_TICKETS:http://cinema-tickets-service:8085}
+    ads: ${GATEWAY_SERVICES_ADS:http://cinema-ads-service:8086}
+    reports: ${GATEWAY_SERVICES_REPORTS:http://cinema-reports-service:8087}
   rate-limit:
     replenish-rate: 15
     burst-capacity: 30
