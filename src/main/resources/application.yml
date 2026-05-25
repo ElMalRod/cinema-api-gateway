@@ -1,4 +1,4 @@
-server:
+﻿server:
   port: 8080
 
 spring:
@@ -53,9 +53,9 @@ gateway:
     users: ${GATEWAY_SERVICES_USERS:http://cinema-users-service:8082}
     movies: ${GATEWAY_SERVICES_MOVIES:http://cinema-movies-service:8083}
     cinemas: ${GATEWAY_SERVICES_CINEMAS:http://cinema-cinemas-service:8084}
-    tickets: ${GATEWAY_SERVICES_TICKETS:http://13.59.250.112:8085}
-    ads: ${GATEWAY_SERVICES_ADS:http://18.221.146.156:8086}
-    reports: ${GATEWAY_SERVICES_REPORTS:http://3.143.243.97:8087}
+    tickets: ${GATEWAY_SERVICES_TICKETS:http://13.59.250.112}
+    ads: ${GATEWAY_SERVICES_ADS:http://18.221.146.156}
+    reports: ${GATEWAY_SERVICES_REPORTS:http://3.143.243.97}
   rate-limit:
     replenish-rate: 15
     burst-capacity: 30
