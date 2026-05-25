@@ -47,10 +47,10 @@ management:
 
 gateway:
   auth-service:
-    base-url: ${GATEWAY_AUTH_BASE_URL:http://localhost:8081}
+    base-url: ${GATEWAY_AUTH_BASE_URL:http://cinema-auth-service:8081}
   services:
-    auth: ${GATEWAY_SERVICE_AUTH:http://localhost:8081}
-    users: ${GATEWAY_SERVICE_USERS:http://localhost:8082}
+    auth: ${GATEWAY_SERVICE_AUTH:http://cinema-auth-service:8081}
+    users: ${GATEWAY_SERVICE_USERS:http://cinema-users-service:8082}
     movies: ${GATEWAY_SERVICE_MOVIES:http://localhost:8083}
     cinemas: ${GATEWAY_SERVICE_CINEMAS:http://localhost:8084}
     tickets: ${GATEWAY_SERVICE_TICKETS:http://localhost:8085}
