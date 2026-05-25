@@ -7,82 +7,81 @@ services:
       dockerfile: Dockerfile
     container_name: api-gateway
     ports:
-      - "8080:8080"
+      - "8085:8080"
     environment:
       - SPRING_PROFILES_ACTIVE=docker
-      - GATEWAY_AUTH_SERVICE_BASE_URL=http://auth-service:8081
-      - GATEWAY_SERVICES_AUTH=http://auth-service:8081
-      - GATEWAY_SERVICES_USERS=http://users-service:8082
-      - GATEWAY_SERVICES_MOVIES=http://movies-service:8083
-      - GATEWAY_SERVICES_CINEMAS=http://cinemas-service:8084
-      - GATEWAY_SERVICES_TICKETS=http://tickets-service:8085
-      - GATEWAY_SERVICES_ADS=http://ads-service:8086
-      - GATEWAY_SERVICES_REPORTS=http://reports-service:8087
+      - GATEWAY_AUTH_BASE_URL=http://cinema-auth-service:8081
+      - GATEWAY_SERVICES_AUTH=http://cinema-auth-service:8081
+      - GATEWAY_SERVICES_USERS=http://cinema-users-service:8082
+      - GATEWAY_SERVICES_MOVIES=http://cinema-movies-service:8083
+      - GATEWAY_SERVICES_CINEMAS=http://cinema-cinemas-service:8084
+      - GATEWAY_SERVICES_TICKETS=http://cinema-tickets-service:8085
+      - GATEWAY_SERVICES_ADS=http://cinema-ads-service:8086
+      - GATEWAY_SERVICES_REPORTS=http://cinema-reports-service:8087
     depends_on:
-      - auth-service
-      - users-service
-      - movies-service
-      - cinemas-service
-      - tickets-service
-      - ads-service
-      - reports-service
-      - 
+      - cinema-auth-service
+      - cinema-users-service
+      - cinema-movies-service
+      - cinema-cinemas-service
+      - cinema-tickets-service
+      - cinema-ads-service
+      - cinema-reports-service
 
 
     networks:
       - cinema-net
 
-  auth-service:
+  cinema-auth-service:
     image: auth-service:latest
-    container_name: auth-service
+    container_name: cinema-auth-service
     ports:
       - "8081:8081"
     networks:
       - cinema-net
 
-  users-service:
+  cinema-users-service:
     image: users-service:latest
-    container_name: users-service
+    container_name: cinema-users-service
     ports:
       - "8082:8082"
     networks:
       - cinema-net
 
-  movies-service:
+  cinema-movies-service:
     image: movies-service:latest
-    container_name: movies-service
+    container_name: cinema-movies-service
     ports:
       - "8083:8083"
     networks:
       - cinema-net
 
-  cinemas-service:
+  cinema-cinemas-service:
     image: cinemas-service:latest
-    container_name: cinemas-service
+    container_name: cinema-cinemas-service
     ports:
       - "8084:8084"
     networks:
       - cinema-net
 
-  tickets-service:
+  cinema-tickets-service:
     image: tickets-service:latest
-    container_name: tickets-service
+    container_name: cinema-tickets-service
     ports:
       - "8085:8085"
     networks:
       - cinema-net
 
-  ads-service:
+  cinema-ads-service:
     image: ads-service:latest
-    container_name: ads-service
+    container_name: cinema-ads-service
     ports:
       - "8086:8086"
     networks:
       - cinema-net
 
-  reports-service:
+  cinema-reports-service:
     image: reports-service:latest
-    container_name: reports-service
+    container_name: cinema-reports-service
     ports:
       - "8087:8087"
     networks:

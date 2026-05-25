@@ -5,8 +5,8 @@ pipeline {
         SERVICE_NAME      = 'cinema-api-gateway'
         SERVICE_PORT      = '8085'
         KAFKA_SERVERS     = '18.188.55.33:9092'
-        AUTH_SERVICE_URL  = 'http://cinema-auth-service:8081'
-        USERS_SERVICE_URL = 'http://cinema-users-service:8082'
+        GATEWAY_SERVICES_AUTH  = 'http://cinema-auth-service:8081'
+        GATEWAY_SERVICES_USERS = 'http://cinema-users-service:8082'
     }
 
     stages {
@@ -106,8 +106,8 @@ pipeline {
                                     --name cinema-api-gateway \
                                     --network cinema-network \
                                     -p 8085:8080 \
-                                    -e AUTH_SERVICE_URL=http://cinema-auth-service:8081 \
-                                    -e USERS_SERVICE_URL=http://cinema-users-service:8082 \
+                                    -e GATEWAY_SERVICES_AUTH="$GATEWAY_SERVICES_AUTH" \
+                                    -e GATEWAY_SERVICES_USERS="$GATEWAY_SERVICES_USERS" \
                                     -e SPRING_KAFKA_BOOTSTRAP_SERVERS=18.188.55.33:9092 \
                                     cinema-api-gateway:latest
                             "
