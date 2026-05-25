@@ -1,4 +1,4 @@
-version: "3.9"
+﻿version: "3.9"
 
 services:
   api-gateway:
@@ -15,9 +15,9 @@ services:
       - GATEWAY_SERVICES_USERS=http://cinema-users-service:8082
       - GATEWAY_SERVICES_MOVIES=http://cinema-movies-service:8083
       - GATEWAY_SERVICES_CINEMAS=http://cinema-cinemas-service:8084
-      - GATEWAY_SERVICES_TICKETS=http://13.59.250.112:8085
-      - GATEWAY_SERVICES_ADS=http://18.221.146.156:8086
-      - GATEWAY_SERVICES_REPORTS=http://3.143.243.97:8087
+      - GATEWAY_SERVICES_TICKETS=http://13.59.250.112
+      - GATEWAY_SERVICES_ADS=http://18.221.146.156
+      - GATEWAY_SERVICES_REPORTS=http://3.143.243.97
     depends_on:
       - cinema-auth-service
       - cinema-users-service
