@@ -15,19 +15,14 @@ services:
       - GATEWAY_SERVICES_USERS=http://cinema-users-service:8082
       - GATEWAY_SERVICES_MOVIES=http://cinema-movies-service:8083
       - GATEWAY_SERVICES_CINEMAS=http://cinema-cinemas-service:8084
-      - GATEWAY_SERVICES_TICKETS=http://cinema-tickets-service:8085
-      - GATEWAY_SERVICES_ADS=http://cinema-ads-service:8086
-      - GATEWAY_SERVICES_REPORTS=http://cinema-reports-service:8087
+      - GATEWAY_SERVICES_TICKETS=http://13.59.250.112:8085
+      - GATEWAY_SERVICES_ADS=http://18.221.146.156:8086
+      - GATEWAY_SERVICES_REPORTS=http://3.143.243.97:8087
     depends_on:
       - cinema-auth-service
       - cinema-users-service
       - cinema-movies-service
       - cinema-cinemas-service
-      - cinema-tickets-service
-      - cinema-ads-service
-      - cinema-reports-service
-
-
     networks:
       - cinema-net
 
@@ -60,30 +55,6 @@ services:
     container_name: cinema-cinemas-service
     ports:
       - "8084:8084"
-    networks:
-      - cinema-net
-
-  cinema-tickets-service:
-    image: tickets-service:latest
-    container_name: cinema-tickets-service
-    ports:
-      - "8085:8085"
-    networks:
-      - cinema-net
-
-  cinema-ads-service:
-    image: ads-service:latest
-    container_name: cinema-ads-service
-    ports:
-      - "8086:8086"
-    networks:
-      - cinema-net
-
-  cinema-reports-service:
-    image: reports-service:latest
-    container_name: cinema-reports-service
-    ports:
-      - "8087:8087"
     networks:
       - cinema-net
 
