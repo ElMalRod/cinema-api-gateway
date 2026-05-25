@@ -47,9 +47,9 @@ management:
 
 gateway:
   auth-service:
-    base-url: ${GATEWAY_AUTH_BASE_URL:${GATEWAY_SERVICES_AUTH}}
+    base-url: ${GATEWAY_AUTH_BASE_URL:${GATEWAY_SERVICES_AUTH=http://cinema-auth-service:8081}}
   services:
-    auth: ${GATEWAY_SERVICES_AUTH}
+    auth: ${GATEWAY_SERVICES_AUTH=http://cinema-auth-service:8081}
     users: ${GATEWAY_SERVICES_USERS:http://cinema-users-service:8082}
     movies: ${GATEWAY_SERVICES_MOVIES:http://cinema-movies-service:8083}
     cinemas: ${GATEWAY_SERVICES_CINEMAS:http://cinema-cinemas-service:8084}
